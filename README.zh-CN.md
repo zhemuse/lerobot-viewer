@@ -6,7 +6,7 @@
 
 ## 功能
 
-![四大核心能力](docs/assets/features.png)
+![四大核心能力](assets/features.png)
 
 ### 多模态数据同步播放
 多路相机视频、action 与 state 信号在统一时间轴上帧级对齐播放，拖动即所见，逐帧核对遥操作数据不再靠猜。

@@ -6,7 +6,7 @@ A desktop application for visualizing [LeRobot](https://github.com/huggingface/l
 
 ## Features
 
-![Core capabilities](docs/assets/features.png)
+![Core capabilities](assets/features.png)
 
 ### Multi-modal synchronized playback
 Multi-camera video, action and state signals aligned frame-by-frame on a single timeline. Drag to scrub; inspect teleoperation data frame-by-frame without guessing.

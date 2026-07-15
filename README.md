@@ -1,5 +1,7 @@
 # LeRobot Viewer
 
+**[中文](README.zh-CN.md) | English**
+
 A desktop application for visualizing [LeRobot](https://github.com/huggingface/lerobot) datasets locally. Inspect robot episodes with synchronized video playback, joint curves, and 3D robot visualization — all from local files, no server required.
 
 ## Features

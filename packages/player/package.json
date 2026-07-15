@@ -1,0 +1,34 @@
+{
+  "name": "@lerobot/player",
+  "version": "0.1.0",
+  "description": "Multimodal playback SDK for LeRobot datasets — React + Three.js",
+  "license": "MIT",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.4.1",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.14.0",
+    "motion": "^12.38.0",
+    "tailwind-merge": "^3.0.0",
+    "three": "^0.175.0",
+    "uplot": "^1.6.31",
+    "urdf-loader": "^0.12.5"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/three": "^0.184.1",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,36 @@
+@import "tailwindcss";
+@source "./";
+@source "../../../../packages/player";
+
+:root {
+  --bg: #121212;
+  --bg-panel: #18181c;
+  --bg-panel-header: #202025;
+  --bg-hover: #26262b;
+  --bg-active: #26262c;
+  --bg-rail: #0e0e10;
+  --border: #2e2e33;
+  --border-subtle: #242428;
+  --border-hover: #3a3a42;
+  --ink: #e1e1e4;
+  --ink-muted: #9a9aa4;
+  --ink-subtle: #5a5a63;
+  --accent: #9382fe;
+  --accent-strong: #5B3EFF;
+  --accent-soft: rgba(147, 130, 254, 0.16);
+  --danger: #ef5350;
+  --success: #66bb6a;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.12);
+
+  /* 兼容 packages/player：它引用了这两个旧变量名 */
+  --bg-muted: var(--bg-panel-header);
+  --bg-surface: var(--bg-panel);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}

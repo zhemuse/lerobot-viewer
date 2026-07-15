@@ -1,0 +1,16 @@
+{
+  "name": "lerobot-viewer-monorepo",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter lerobot-viewer dev",
+    "build": "pnpm --filter lerobot-viewer build",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  }
+}

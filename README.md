@@ -6,11 +6,19 @@ A desktop application for visualizing [LeRobot](https://github.com/huggingface/l
 
 ## Features
 
-- Open any LeRobot-format dataset directory
-- Synchronized multi-camera video playback
-- Joint position / action curves (uPlot)
-- 3D robot visualization with URDF support
-- Recent datasets list
+![Core capabilities](docs/assets/features.png)
+
+### Multi-modal synchronized playback
+Multi-camera video, action and state signals aligned frame-by-frame on a single timeline. Drag to scrub; inspect teleoperation data frame-by-frame without guessing.
+
+### Action / State trajectory analysis
+Overlay action vs. state curves per joint. Deviation and anomaly regions are highlighted automatically, making it easy to pinpoint segments where execution fell short.
+
+### 3D robot playback · end-effector trajectory
+Load a URDF and replay every joint pose in real time inside a 3D viewport. The end-effector trajectory is fully visible; inspect motion quality from any angle.
+
+### AI data quality analysis
+AI scores every episode automatically, detecting motion jitter, camera occlusion, frame-sync drift, and signal loss — so you can clean bad data before training.
 
 ## Packages
 

@@ -16,6 +16,7 @@ export function useVideoChannel(fps: number): {
   const videoMapRef = useRef<Map<string, HTMLVideoElement>>(new Map())
   const fpsRef = useRef(fps)
   fpsRef.current = fps
+  const rateRef = useRef(clock.state.rate)
 
   // Play/pause & rate sync — piggybacks on the low-frequency state channel.
   useEffect(() => {
@@ -29,6 +30,7 @@ export function useVideoChannel(fps: number): {
       if (!isPlayingChanged && !rateChanged) return
       videoMapRef.current.forEach((video) => {
         if (rateChanged) {
+          rateRef.current = state.rate
           video.playbackRate = state.rate
         }
         if (isPlayingChanged) {
@@ -51,7 +53,10 @@ export function useVideoChannel(fps: number): {
 
     const check = () => {
       const time = clock.currentTimeRef.current
-      const threshold = 2 / fpsRef.current
+      // Scale threshold by rate: at 10×, timing jitter is amplified 10×, so
+      // a fixed 2-frame threshold would trigger seeks every interval. Keep the
+      // real-time tolerance constant by multiplying by the current rate.
+      const threshold = (2 / fpsRef.current) * Math.max(1, rateRef.current)
       videoMapRef.current.forEach((video) => {
         if (Math.abs(video.currentTime - time) > threshold) {
           video.currentTime = time

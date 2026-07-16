@@ -1,7 +1,6 @@
+import { Pause, Play, SkipBack, SkipForward } from 'lucide-react'
 import { type ReactNode, useCallback } from 'react'
-import { Play, Pause, SkipBack, SkipForward } from 'lucide-react'
 import { Button } from '../components/ui/button'
-import { Slider } from '../components/ui/slider'
 import {
   Select,
   SelectContent,
@@ -9,8 +8,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select'
-import { usePlayerState } from '../hooks/usePlayerState'
+import { Slider } from '../components/ui/slider'
 import { usePlayerActions } from '../hooks/usePlayerActions'
+import { usePlayerState } from '../hooks/usePlayerState'
 
 const RATE_OPTIONS = [
   { label: '0.5×', value: 0.5 },
@@ -19,7 +19,7 @@ const RATE_OPTIONS = [
   { label: '2×', value: 2 },
   { label: '3x', value: 3 },
   { label: '5x', value: 5 },
-  { label: '10x', value: 10 }
+  { label: '10x', value: 10 },
 ]
 
 function formatTime(frame: number, fps: number): string {
@@ -54,11 +54,7 @@ export function PlaybackControls({ totalFrames, fps, strip }: PlaybackControlsPr
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={prevFrame}>
             <SkipBack className="h-3.5 w-3.5" />
           </Button>
-          <Button
-            size="icon"
-            className="h-8 w-8 rounded-full"
-            onClick={isPlaying ? pause : play}
-          >
+          <Button size="icon" className="h-8 w-8 rounded-full" onClick={isPlaying ? pause : play}>
             {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={nextFrame}>
@@ -86,7 +82,9 @@ export function PlaybackControls({ totalFrames, fps, strip }: PlaybackControlsPr
 
         <Select value={String(rate)} onValueChange={(v) => setRate(Number(v))}>
           <SelectTrigger className="h-7 w-20 text-xs shrink-0">
-            <SelectValue>{RATE_OPTIONS.find(o => o.value === rate)?.label ?? `${rate}×`}</SelectValue>
+            <SelectValue>
+              {RATE_OPTIONS.find((o) => o.value === rate)?.label ?? `${rate}×`}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {RATE_OPTIONS.map((o) => (
@@ -104,15 +102,11 @@ export function PlaybackControls({ totalFrames, fps, strip }: PlaybackControlsPr
           min={0}
           max={Math.max(totalFrames - 1, 1)}
           step={1}
-          onValueChange={(vals) => seek(Array.isArray(vals) ? vals[0] ?? 0 : vals)}
+          onValueChange={(vals) => seek(Array.isArray(vals) ? (vals[0] ?? 0) : vals)}
         />
       </div>
 
-      {strip && (
-        <div className="px-4 pb-3">
-          {strip}
-        </div>
-      )}
+      {strip && <div className="px-4 pb-3">{strip}</div>}
     </div>
   )
 }

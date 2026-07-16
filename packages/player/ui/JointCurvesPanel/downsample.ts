@@ -22,14 +22,22 @@ export function downsampleColumnar(cols: number[][], maxPoints: number): number[
     const end = Math.min(Math.floor((b + 1) * bucketSize), len)
     if (start >= end) continue
 
-    let minVal = Infinity, maxVal = -Infinity
-    let minIdx = start, maxIdx = start
+    let minVal = Infinity,
+      maxVal = -Infinity
+    let minIdx = start,
+      maxIdx = start
 
     for (let i = start; i < end; i++) {
       for (let c = 1; c < cols.length; c++) {
         const v = cols[c][i]
-        if (v < minVal) { minVal = v; minIdx = i }
-        if (v > maxVal) { maxVal = v; maxIdx = i }
+        if (v < minVal) {
+          minVal = v
+          minIdx = i
+        }
+        if (v > maxVal) {
+          maxVal = v
+          maxIdx = i
+        }
       }
     }
 

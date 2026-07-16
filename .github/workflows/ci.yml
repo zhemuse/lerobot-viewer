@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  typecheck:
+  quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,10 +18,14 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
       - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build:packages
 
   build-app:
     runs-on: macos-latest
+    needs: quality
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

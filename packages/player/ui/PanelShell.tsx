@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react'
-import { useRef, useState, useCallback, useEffect } from 'react'
-import { motion } from 'motion/react'
 import { MoreVertical } from 'lucide-react'
+import { motion } from 'motion/react'
+import type { ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { cn } from '../lib/utils'
 
 const FullscreenIcon = () => (
@@ -75,6 +75,7 @@ export function PanelShell({
         {extraActions}
         {showFullscreen && (
           <button
+            type="button"
             onClick={inFullscreen ? exitFullscreen : enterFullscreen}
             className="flex items-center justify-center w-6 h-6 rounded hover:bg-white/10 text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors"
           >
@@ -83,6 +84,7 @@ export function PanelShell({
         )}
         {moreMenu && (
           <button
+            type="button"
             className="flex items-center justify-center w-6 h-6 rounded hover:bg-white/10 text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors"
           >
             <MoreVertical size={10} />
@@ -96,8 +98,15 @@ export function PanelShell({
     <motion.div
       ref={containerRef}
       layout
-      className={cn('flex flex-col overflow-hidden bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg', className)}
-      style={isFullscreen ? { position: 'absolute', inset: 0, zIndex: 50, borderRadius: 0, border: 'none' } : {}}
+      className={cn(
+        'flex flex-col overflow-hidden bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg',
+        className,
+      )}
+      style={
+        isFullscreen
+          ? { position: 'absolute', inset: 0, zIndex: 50, borderRadius: 0, border: 'none' }
+          : {}
+      }
       transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
     >
       {toolbar(isFullscreen)}

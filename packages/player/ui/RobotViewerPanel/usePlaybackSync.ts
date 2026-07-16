@@ -1,5 +1,5 @@
-import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
+import { useRef } from 'react'
 import type { EpisodeFrame } from '../../core/types'
 import type { URDFRobotHandle } from './URDFRobot'
 
@@ -23,7 +23,12 @@ function findFrameByTime(frames: EpisodeFrame[], t: number): EpisodeFrame {
   return frames[lo]
 }
 
-export function usePlaybackSync({ frames, jointNames, currentTimeRef, robotRef }: UsePlaybackSyncOptions) {
+export function usePlaybackSync({
+  frames,
+  jointNames,
+  currentTimeRef,
+  robotRef,
+}: UsePlaybackSyncOptions) {
   const lastFrameIdxRef = useRef(-1)
   const anglesRef = useRef<Record<string, number>>({})
 

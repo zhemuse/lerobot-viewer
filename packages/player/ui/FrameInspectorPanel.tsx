@@ -1,7 +1,7 @@
 'use client'
-import { PanelShell } from './PanelShell'
-import { usePlayerState } from '../hooks/usePlayerState'
 import type { EpisodeFrame } from '../core/types'
+import { usePlayerState } from '../hooks/usePlayerState'
+import { PanelShell } from './PanelShell'
 
 interface FrameInspectorPanelProps {
   frames: EpisodeFrame[]

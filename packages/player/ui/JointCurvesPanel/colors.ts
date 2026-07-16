@@ -50,7 +50,9 @@ function shiftLightness(hex: string, delta: number): string {
   const nl = Math.max(0, Math.min(1, l + delta))
 
   if (s === 0) {
-    const v = Math.round(nl * 255).toString(16).padStart(2, '0')
+    const v = Math.round(nl * 255)
+      .toString(16)
+      .padStart(2, '0')
     return `#${v}${v}${v}`
   }
 
@@ -65,9 +67,16 @@ function shiftLightness(hex: string, delta: number): string {
     return p
   }
 
-  return '#' + [h + 1 / 3, h, h - 1 / 3]
-    .map((t) => Math.round(hue2rgb(t) * 255).toString(16).padStart(2, '0'))
-    .join('')
+  return (
+    '#' +
+    [h + 1 / 3, h, h - 1 / 3]
+      .map((t) =>
+        Math.round(hue2rgb(t) * 255)
+          .toString(16)
+          .padStart(2, '0'),
+      )
+      .join('')
+  )
 }
 
 /**

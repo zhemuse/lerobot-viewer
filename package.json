@@ -4,10 +4,22 @@
   "scripts": {
     "dev": "pnpm --filter lerobot-viewer dev",
     "build": "pnpm --filter lerobot-viewer build",
-    "typecheck": "pnpm -r typecheck"
+    "build:packages": "pnpm --filter \"./packages/*\" build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "prepare": "lefthook install"
   },
   "devDependencies": {
-    "typescript": "^5.7.2"
+    "@biomejs/biome": "^2.5.4",
+    "happy-dom": "^20.10.6",
+    "lefthook": "^2.1.10",
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.10"
   },
   "engines": {
     "node": ">=20",

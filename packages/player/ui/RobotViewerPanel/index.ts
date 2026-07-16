@@ -1,2 +1,2 @@
 export { RobotViewerPanel } from './RobotViewerPanel'
-export type { URDFRobotHandle, LinkHoverInfo } from './URDFRobot'
+export type { LinkHoverInfo, URDFRobotHandle } from './URDFRobot'

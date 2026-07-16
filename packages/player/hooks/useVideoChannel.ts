@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { usePlayerContext } from './PlayerProvider'
 
+/** Drift correction rate. 10Hz is plenty — a 100 ms lag is imperceptible on 30–60 fps footage. */
+const DRIFT_CHECK_INTERVAL_MS = 100
+
 /**
- * 多路 <video> 注册制，内部订阅时钟做漂移纠偏。
- * registerVideo 传 null 时自动注销。
+ * Multi-`<video>` registration hub. Subscribes to the clock and keeps every
+ * registered element in sync (play/pause, playbackRate, and periodic drift
+ * correction). Pass `null` to `registerVideo(key, null)` to unregister.
  */
 export function useVideoChannel(fps: number): {
   registerVideo: (key: string, el: HTMLVideoElement | null) => void
@@ -13,7 +17,7 @@ export function useVideoChannel(fps: number): {
   const fpsRef = useRef(fps)
   fpsRef.current = fps
 
-  // 播放/暂停 & 倍速同步
+  // Play/pause & rate sync — piggybacks on the low-frequency state channel.
   useEffect(() => {
     let prevIsPlaying = clock.state.isPlaying
     let prevRate = clock.state.rate
@@ -38,16 +42,48 @@ export function useVideoChannel(fps: number): {
     })
   }, [clock])
 
-  // 高频漂移纠偏
+  // Drift correction. Previously ran on `clock.subscribe` which fires every rAF
+  // (~60Hz). That meant `Math.abs(video.currentTime - time)` ran on every video
+  // element every frame — expensive at 4+ cameras. Now we tick at 10Hz via a
+  // setInterval; only runs while playing. A 100 ms slip is not perceptible.
   useEffect(() => {
-    return clock.subscribe((_frame, time) => {
+    let intervalId: ReturnType<typeof setInterval> | null = null
+
+    const check = () => {
+      const time = clock.currentTimeRef.current
       const threshold = 2 / fpsRef.current
       videoMapRef.current.forEach((video) => {
         if (Math.abs(video.currentTime - time) > threshold) {
           video.currentTime = time
         }
       })
+    }
+
+    const start = () => {
+      if (intervalId !== null) return
+      intervalId = setInterval(check, DRIFT_CHECK_INTERVAL_MS)
+    }
+    const stop = () => {
+      if (intervalId === null) return
+      clearInterval(intervalId)
+      intervalId = null
+    }
+
+    if (clock.state.isPlaying) start()
+
+    const unsubscribe = clock.onStateChange((s) => {
+      if (s.isPlaying) start()
+      else {
+        stop()
+        // Snap once on pause so scrubbing while paused is exact.
+        check()
+      }
     })
+
+    return () => {
+      stop()
+      unsubscribe()
+    }
   }, [clock])
 
   const registerVideo = useCallback(

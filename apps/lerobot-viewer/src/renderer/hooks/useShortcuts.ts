@@ -1,16 +1,11 @@
+import { usePlayerActions, usePlayerState } from '@lerobot-viewer/player'
 import { useEffect } from 'react'
-import { usePlayerActions, usePlayerState } from '@lerobot/player'
 
 function isEditable(target: EventTarget | null): boolean {
   const el = target as HTMLElement | null
   if (!el) return false
   const tag = el.tagName
-  return (
-    tag === 'INPUT' ||
-    tag === 'TEXTAREA' ||
-    tag === 'SELECT' ||
-    el.isContentEditable === true
-  )
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable === true
 }
 
 interface GlobalHandlers {

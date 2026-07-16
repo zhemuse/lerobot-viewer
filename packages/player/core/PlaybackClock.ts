@@ -16,7 +16,10 @@ export class PlaybackClock {
   private _subscribers = new Set<FrameCallback>()
   private _stateListeners = new Set<(s: ClockState) => void>()
 
-  /** 供 R3F useFrame 和 chart playhead 直读，无需订阅 */
+  /**
+   * Direct-read escape hatch for R3F `useFrame` and chart playheads that need
+   * the latest time without subscribing (avoids React reconciliation).
+   */
   readonly currentTimeRef: { current: number } = { current: 0 }
 
   constructor({ totalFrames, fps, throttle = 3 }: ClockOptions) {
@@ -59,8 +62,10 @@ export class PlaybackClock {
     this._subscribers.forEach((cb) => {
       try {
         cb(frame, this._currentTime)
-      } catch {
-        // Isolate subscriber failures so one panel cannot break playback.
+      } catch (err) {
+        // Isolate subscriber failures so one panel cannot break playback,
+        // but do surface them — silent swallowing hides real bugs.
+        console.error('[PlaybackClock] frame subscriber threw:', err)
       }
     })
   }
@@ -70,8 +75,8 @@ export class PlaybackClock {
     this._stateListeners.forEach((cb) => {
       try {
         cb(s)
-      } catch {
-        // Isolate listener failures.
+      } catch (err) {
+        console.error('[PlaybackClock] state listener threw:', err)
       }
     })
   }
@@ -80,10 +85,7 @@ export class PlaybackClock {
     if (this._isPlaying) {
       if (this._lastTimestamp !== null) {
         const delta = (timestamp - this._lastTimestamp) / 1000
-        this._currentTime = Math.min(
-          this._currentTime + delta * this._rate,
-          this._totalDuration,
-        )
+        this._currentTime = Math.min(this._currentTime + delta * this._rate, this._totalDuration)
 
         if (this._currentTime >= this._totalDuration) {
           this._currentTime = this._totalDuration

@@ -1,34 +1,145 @@
 {
-  "name": "@lerobot/player",
+  "name": "@lerobot-viewer/player",
   "version": "0.1.0",
   "description": "Multimodal playback SDK for LeRobot datasets — React + Three.js",
   "license": "MIT",
+  "author": "yangxinlin",
+  "keywords": [
+    "lerobot",
+    "robotics",
+    "urdf",
+    "three",
+    "react",
+    "playback",
+    "visualization",
+    "hugging-face"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhemuse/lerobot-viewer.git",
+    "directory": "packages/player"
+  },
+  "homepage": "https://github.com/zhemuse/lerobot-viewer/tree/main/packages/player",
+  "bugs": {
+    "url": "https://github.com/zhemuse/lerobot-viewer/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "type": "commonjs",
   "main": "./index.ts",
   "types": "./index.ts",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "base",
+    "core",
+    "hooks",
+    "ui",
+    "components",
+    "lib",
+    "index.ts",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "import": {
+          "types": "./dist/index.d.mts",
+          "default": "./dist/index.mjs"
+        },
+        "require": {
+          "types": "./dist/index.d.ts",
+          "default": "./dist/index.cjs"
+        }
+      },
+      "./base": {
+        "import": {
+          "types": "./dist/base/index.d.mts",
+          "default": "./dist/base/index.mjs"
+        },
+        "require": {
+          "types": "./dist/base/index.d.ts",
+          "default": "./dist/base/index.cjs"
+        }
+      },
+      "./core": {
+        "import": {
+          "types": "./dist/core/index.d.mts",
+          "default": "./dist/core/index.mjs"
+        },
+        "require": {
+          "types": "./dist/core/index.d.ts",
+          "default": "./dist/core/index.cjs"
+        }
+      },
+      "./hooks": {
+        "import": {
+          "types": "./dist/hooks/index.d.mts",
+          "default": "./dist/hooks/index.mjs"
+        },
+        "require": {
+          "types": "./dist/hooks/index.d.ts",
+          "default": "./dist/hooks/index.cjs"
+        }
+      },
+      "./ui": {
+        "import": {
+          "types": "./dist/ui/index.d.mts",
+          "default": "./dist/ui/index.mjs"
+        },
+        "require": {
+          "types": "./dist/ui/index.d.ts",
+          "default": "./dist/ui/index.cjs"
+        }
+      }
+    }
+  },
   "scripts": {
+    "build": "tsup",
     "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18",
+    "three": ">=0.160.0",
+    "@react-three/fiber": ">=9",
+    "@react-three/drei": ">=10"
+  },
+  "peerDependenciesMeta": {
+    "@react-three/fiber": {
+      "optional": true
+    },
+    "@react-three/drei": {
+      "optional": true
+    },
+    "three": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.6.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.14.0",
     "motion": "^12.38.0",
     "tailwind-merge": "^3.0.0",
-    "three": "^0.175.0",
     "uplot": "^1.6.31",
     "urdf-loader": "^0.12.5"
   },
-  "peerDependencies": {
-    "react": ">=18",
-    "react-dom": ">=18"
-  },
   "devDependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.184.1",
+    "react": "^19",
+    "react-dom": "^19",
+    "three": "^0.175.0",
     "typescript": "^5.7.2"
   }
 }

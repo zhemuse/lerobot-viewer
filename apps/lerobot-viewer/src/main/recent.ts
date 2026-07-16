@@ -1,6 +1,6 @@
+import { promises as fs } from 'node:fs'
+import { basename, join } from 'node:path'
 import { app } from 'electron'
-import { promises as fs } from 'fs'
-import { join, basename } from 'path'
 
 export type RecentEntry = {
   path: string

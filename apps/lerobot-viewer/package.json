@@ -30,8 +30,8 @@
     }
   },
   "dependencies": {
-    "@lerobot/lerobot-reader": "workspace:*",
-    "@lerobot/player": "workspace:*",
+    "@lerobot-viewer/reader": "workspace:*",
+    "@lerobot-viewer/player": "workspace:*",
     "lucide-react": "^1.14.0"
   },
   "devDependencies": {

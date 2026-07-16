@@ -1,5 +1,5 @@
+import type { DatasetMeta, EpisodeFrame } from '@lerobot-viewer/reader'
 import { contextBridge, ipcRenderer } from 'electron'
-import type { DatasetMeta, EpisodeFrame } from '@lerobot/lerobot-reader'
 import type { RecentEntry } from '../main/recent'
 
 const lerobot = {
@@ -9,20 +9,16 @@ const lerobot = {
   loadEpisode: (episodeIndex: number): Promise<EpisodeFrame[]> =>
     ipcRenderer.invoke('load-episode', episodeIndex),
 
-  resolveVideoUrl: (relativePath: string): string =>
-    `lerobot://videos/${relativePath}`,
+  resolveVideoUrl: (relativePath: string): string => `lerobot://videos/${relativePath}`,
 
-  openUrdf: (): Promise<string | null> =>
-    ipcRenderer.invoke('open-urdf'),
+  openUrdf: (): Promise<string | null> => ipcRenderer.invoke('open-urdf'),
 
-  listRecent: (): Promise<RecentEntry[]> =>
-    ipcRenderer.invoke('list-recent'),
+  listRecent: (): Promise<RecentEntry[]> => ipcRenderer.invoke('list-recent'),
 
   openRecent: (path: string): Promise<{ path: string; meta: DatasetMeta } | null> =>
     ipcRenderer.invoke('open-recent', path),
 
-  clearRecent: (): Promise<void> =>
-    ipcRenderer.invoke('clear-recent'),
+  clearRecent: (): Promise<void> => ipcRenderer.invoke('clear-recent'),
 }
 
 contextBridge.exposeInMainWorld('lerobot', lerobot)

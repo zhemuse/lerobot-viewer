@@ -1,9 +1,9 @@
-import { ipcMain, dialog } from 'electron'
-import { readDatasetMeta, readEpisodeFrames } from '@lerobot/lerobot-reader'
-import { dirname, basename } from 'path'
-import { promises as fs } from 'fs'
+import { promises as fs } from 'node:fs'
+import { basename, dirname } from 'node:path'
+import { readDatasetMeta, readEpisodeFrames } from '@lerobot-viewer/reader'
+import { dialog, ipcMain } from 'electron'
 import { setDatasetRoot, setUrdfRoot } from './protocol'
-import { readRecent, pushRecent, removeRecent, clearRecent } from './recent'
+import { clearRecent, pushRecent, readRecent, removeRecent } from './recent'
 
 let currentDatasetPath = ''
 
@@ -19,7 +19,7 @@ export function registerIpcHandlers() {
   ipcMain.handle('open-dataset', async () => {
     const result = await dialog.showOpenDialog({
       properties: ['openDirectory'],
-      title: '选择 LeRobot 数据集目录',
+      title: 'Select a LeRobot dataset folder',
     })
     if (result.canceled || !result.filePaths[0]) return null
     return openDatasetAt(result.filePaths[0])
@@ -34,7 +34,7 @@ export function registerIpcHandlers() {
     const result = await dialog.showOpenDialog({
       properties: ['openFile'],
       filters: [{ name: 'URDF', extensions: ['urdf'] }],
-      title: '选择 URDF 文件',
+      title: 'Select a URDF file',
     })
     if (result.canceled || !result.filePaths[0]) return null
 

@@ -1,8 +1,8 @@
-import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
+import type { DatasetMeta, EpisodeInfo } from '@lerobot-viewer/reader'
 import { Search } from 'lucide-react'
-import { useUIState, useUIDispatch } from '../state/UIState'
+import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react'
+import { useUIDispatch, useUIState } from '../state/UIState'
 import { EpisodeList } from './EpisodeList'
-import type { DatasetMeta, EpisodeInfo } from '@lerobot/lerobot-reader'
 
 interface SidebarProps {
   meta: DatasetMeta | null
@@ -35,13 +35,7 @@ function formatDuration(totalFrames: number, fps: number): string {
   return `${m}m ${s}s`
 }
 
-function EpisodesSection({
-  meta,
-  episodes,
-  selectedEpisode,
-  onSelectEpisode,
-  fps,
-}: SidebarProps) {
+function EpisodesSection({ meta, episodes, selectedEpisode, onSelectEpisode, fps }: SidebarProps) {
   const [query, setQuery] = useState('')
 
   const filtered = useMemo(() => {
@@ -49,27 +43,19 @@ function EpisodesSection({
     const q = query.toLowerCase()
     return episodes.filter((ep) => {
       const name = `ep_${pad6(ep.episodeIndex)}`
-      return (
-        name.includes(q) ||
-        (ep.task ?? '').toLowerCase().includes(q)
-      )
+      return name.includes(q) || (ep.task ?? '').toLowerCase().includes(q)
     })
   }, [episodes, query])
 
-  const totalFrames = useMemo(
-    () => episodes.reduce((sum, ep) => sum + ep.length, 0),
-    [episodes],
-  )
+  const totalFrames = useMemo(() => episodes.reduce((sum, ep) => sum + ep.length, 0), [episodes])
 
   return (
     <>
-      <SectionHeader>
-        Episodes {episodes.length > 0 && `· ${episodes.length}`}
-      </SectionHeader>
+      <SectionHeader>Episodes {episodes.length > 0 && `· ${episodes.length}`}</SectionHeader>
 
       {episodes.length > 0 && (
         <div className="shrink-0 px-3 pt-2 pb-2 flex flex-col gap-2 border-b border-[var(--border-subtle)]">
-          {/* 数据集概览 chip */}
+          {/* Dataset summary chip */}
           {meta && (
             <div className="flex flex-wrap gap-x-2 gap-y-1 font-mono text-[11px] text-[var(--ink-muted)] tabular-nums">
               <span>{meta.totalEpisodes}ep</span>
@@ -82,18 +68,18 @@ function EpisodesSection({
             </div>
           )}
 
-          {/* 总览 */}
+          {/* Totals */}
           <div className="flex items-center justify-between font-mono text-[11px] text-[var(--ink-subtle)] tabular-nums">
-            <span>{totalFrames.toLocaleString()} 帧</span>
+            <span>{totalFrames.toLocaleString()} frames</span>
             <span>{formatDuration(totalFrames, fps)}</span>
           </div>
 
-          {/* 搜索 */}
+          {/* Search */}
           <div className="flex items-center gap-1.5 h-7 px-2 rounded-md bg-[var(--bg)] border border-[var(--border-subtle)] focus-within:border-[var(--accent)] transition-colors">
             <Search size={12} className="text-[var(--ink-subtle)] shrink-0" />
             <input
               type="text"
-              placeholder="搜索"
+              placeholder="Search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="flex-1 bg-transparent text-[12px] text-[var(--ink)] placeholder:text-[var(--ink-subtle)] focus:outline-none min-w-0"
@@ -103,7 +89,7 @@ function EpisodesSection({
                 type="button"
                 onClick={() => setQuery('')}
                 className="text-[11px] text-[var(--ink-subtle)] hover:text-[var(--ink)] shrink-0"
-                title="清空"
+                title="Clear"
               >
                 ×
               </button>

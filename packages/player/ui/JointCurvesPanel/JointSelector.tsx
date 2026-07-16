@@ -1,8 +1,8 @@
 'use client'
-import { useMemo, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
-import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover'
+import { useMemo, useState } from 'react'
 import { Checkbox } from '../../components/ui/checkbox'
+import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover'
 import { cn } from '../../lib/utils'
 import { jointColor } from './colors'
 
@@ -13,7 +13,12 @@ interface JointSelectorProps {
   onToggleAll: (allVisible: boolean) => void
 }
 
-export function JointSelector({ jointNames, visibleJoints, onToggle, onToggleAll }: JointSelectorProps) {
+export function JointSelector({
+  jointNames,
+  visibleJoints,
+  onToggle,
+  onToggleAll,
+}: JointSelectorProps) {
   const [open, setOpen] = useState(false)
   const N = jointNames.length
   const visibleSet = useMemo(() => new Set(visibleJoints), [visibleJoints])
@@ -26,7 +31,7 @@ export function JointSelector({ jointNames, visibleJoints, onToggle, onToggleAll
         className="flex items-center gap-1 text-xs font-semibold bg-transparent border-0 cursor-pointer p-0"
         style={{ color: 'var(--ink)' }}
       >
-        {allChecked ? '全部' : `${visibleJoints.length}/${N}`} joints
+        {allChecked ? 'All' : `${visibleJoints.length}/${N}`} joints
         <ChevronDown className={cn('h-3 w-3 transition-transform', open && 'rotate-180')} />
       </PopoverTrigger>
       <PopoverContent className="w-52 p-2" align="start">
@@ -37,16 +42,16 @@ export function JointSelector({ jointNames, visibleJoints, onToggle, onToggleAll
               indeterminate={indeterminate}
               onCheckedChange={(v) => onToggleAll(!!v)}
             />
-            全部 joints
+            All joints
           </label>
         </div>
         <div className="max-h-48 overflow-auto">
           {jointNames.map((name, i) => (
-            <label key={name} className="flex items-center gap-2 text-xs cursor-pointer px-1 py-0.5">
-              <Checkbox
-                checked={visibleSet.has(i)}
-                onCheckedChange={(v) => onToggle(i, !!v)}
-              />
+            <label
+              key={name}
+              className="flex items-center gap-2 text-xs cursor-pointer px-1 py-0.5"
+            >
+              <Checkbox checked={visibleSet.has(i)} onCheckedChange={(v) => onToggle(i, !!v)} />
               <span
                 className="inline-block w-2 h-2 rounded-full shrink-0"
                 style={{ background: jointColor(i) }}

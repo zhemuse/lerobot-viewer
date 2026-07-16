@@ -1,4 +1,4 @@
-import { FolderOpen, Box } from 'lucide-react'
+import { Box, FolderOpen } from 'lucide-react'
 import { useRecent } from '../hooks/useRecent'
 import { RecentList } from './RecentList'
 
@@ -48,16 +48,16 @@ export function WelcomeScreen({ onOpenDataset, onOpenUrdf, onOpenRecent }: Welco
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DashboardCard
             icon={<FolderOpen size={22} strokeWidth={1.75} />}
-            title="打开数据集"
+            title="Open dataset"
             shortcut="⌘O"
-            description="从本地目录加载 LeRobot 格式数据集，包含视频、关节和元数据。"
+            description="Load a LeRobot-format dataset from a local folder — videos, joint data, and metadata."
             onClick={onOpenDataset}
           />
           <DashboardCard
             icon={<Box size={22} strokeWidth={1.75} />}
-            title="加载 URDF 模型"
+            title="Load URDF model"
             shortcut="⌘⇧U"
-            description="导入机器人 URDF 描述，与数据集回放同步显示 3D 姿态。"
+            description="Import a robot URDF description and drive it live from the dataset playback."
             onClick={onOpenUrdf}
           />
         </div>

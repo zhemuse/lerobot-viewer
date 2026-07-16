@@ -44,14 +44,30 @@ export function UPlotChart({
   const showActionRef = useRef(showAction)
   const seriesRef = useRef(series)
 
-  useEffect(() => { onSeekRef.current = onSeek })
-  useEffect(() => { onPlotReadyRef.current = onPlotReady })
-  useEffect(() => { fpsRef.current = fps })
-  useEffect(() => { jointNamesRef.current = jointNames })
-  useEffect(() => { visibleJointsRef.current = visibleJoints })
-  useEffect(() => { showStateRef.current = showState })
-  useEffect(() => { showActionRef.current = showAction })
-  useEffect(() => { seriesRef.current = series })
+  useEffect(() => {
+    onSeekRef.current = onSeek
+  })
+  useEffect(() => {
+    onPlotReadyRef.current = onPlotReady
+  })
+  useEffect(() => {
+    fpsRef.current = fps
+  })
+  useEffect(() => {
+    jointNamesRef.current = jointNames
+  })
+  useEffect(() => {
+    visibleJointsRef.current = visibleJoints
+  })
+  useEffect(() => {
+    showStateRef.current = showState
+  })
+  useEffect(() => {
+    showActionRef.current = showAction
+  })
+  useEffect(() => {
+    seriesRef.current = series
+  })
 
   const setPlayhead = useCallback((t: number) => {
     playheadTRef.current = t
@@ -101,8 +117,8 @@ export function UPlotChart({
 
         tooltipEl.innerHTML = `
           <div style="font-size:10px;color:var(--ink-muted);margin-bottom:4px">
-            <div style="display:flex;justify-content:space-between;gap:8px"><span>秒</span><span>${seconds}s</span></div>
-            <div style="display:flex;justify-content:space-between;gap:8px"><span>帧</span><span>${frameIdx}</span></div>
+            <div style="display:flex;justify-content:space-between;gap:8px"><span>Time</span><span>${seconds}s</span></div>
+            <div style="display:flex;justify-content:space-between;gap:8px"><span>Frame</span><span>${frameIdx}</span></div>
           </div>
           <div style="height:1px;background:var(--line);margin:4px 0"></div>
           <div>${rows}</div>`
@@ -111,15 +127,17 @@ export function UPlotChart({
         const cursorAbsLeft = axisOffset + cursorLeft
         const plotMid = axisOffset + u.bbox.width / devicePixelRatio / 2
         const ttWidth = tooltipEl.offsetWidth || 220
-        const left = cursorAbsLeft < plotMid
-          ? cursorAbsLeft + 16
-          : cursorAbsLeft - ttWidth - 16
+        const left = cursorAbsLeft < plotMid ? cursorAbsLeft + 16 : cursorAbsLeft - ttWidth - 16
 
         const tooltipHeight = tooltipEl.offsetHeight || 260
         const containerHeight = el.clientHeight
-        const top = cursorTop != null
-          ? Math.max(8, Math.min(cursorTop - tooltipHeight / 2, containerHeight - tooltipHeight - 8))
-          : 8
+        const top =
+          cursorTop != null
+            ? Math.max(
+                8,
+                Math.min(cursorTop - tooltipHeight / 2, containerHeight - tooltipHeight - 8),
+              )
+            : 8
 
         tooltipEl.style.left = `${left}px`
         tooltipEl.style.top = `${top}px`
@@ -156,10 +174,12 @@ export function UPlotChart({
                 const clickX = e.clientX - rect.left
                 const xVal = u.posToVal(clickX, 'x')
                 const xs = u.data[0] as number[]
-                let lo = 0; let hi = xs.length - 1
+                let lo = 0
+                let hi = xs.length - 1
                 while (lo < hi) {
                   const mid = (lo + hi) >> 1
-                  if (xs[mid] < xVal) lo = mid + 1; else hi = mid
+                  if (xs[mid] < xVal) lo = mid + 1
+                  else hi = mid
                 }
                 if (lo > 0 && Math.abs(xs[lo - 1] - xVal) < Math.abs(xs[lo] - xVal)) lo -= 1
                 const frameIndex = xs[lo] as number
@@ -172,7 +192,8 @@ export function UPlotChart({
                 onSeekRef.current?.(frameIndex)
               })
 
-              if (docListenerRef.current) document.removeEventListener('mousedown', docListenerRef.current)
+              if (docListenerRef.current)
+                document.removeEventListener('mousedown', docListenerRef.current)
               const handleDocMousedown = (e: MouseEvent) => {
                 if (!u.over.contains(e.target as Node)) {
                   isLockedRef.current = false
@@ -246,9 +267,11 @@ export function UPlotChart({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [setPlayhead, series, data])
 
-  useEffect(() => { plotRef.current?.setData(data) }, [data])
+  useEffect(() => {
+    plotRef.current?.setData(data)
+  }, [data])
 
   useEffect(() => {
     if (!plotRef.current) return

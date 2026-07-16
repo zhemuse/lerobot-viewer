@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react'
-import { usePlayerContext } from './PlayerProvider'
 import type { FrameCallback } from '../core/types'
+import { usePlayerContext } from './PlayerProvider'
 
 /**
- * 高频订阅，RAF 每帧回调，零 re-render。
- * 内部用 ref 持有最新 cb，无需调用方 useCallback。
+ * High-frequency subscription — fires on every rAF tick, causes zero React
+ * re-renders. The callback is captured via a ref, so callers don't need to
+ * memoize with `useCallback`.
  */
 export function useSubscribe(cb: FrameCallback): void {
   const { clock } = usePlayerContext()

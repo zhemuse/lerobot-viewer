@@ -1,6 +1,6 @@
+import { usePlayerActions, usePlayerState } from '@lerobot-viewer/player'
+import { Pause, Play, SkipBack, SkipForward } from 'lucide-react'
 import { useCallback, useRef } from 'react'
-import { Play, Pause, SkipBack, SkipForward } from 'lucide-react'
-import { usePlayerState, usePlayerActions } from '@lerobot/player'
 
 const RATE_OPTIONS = [0.5, 1, 2, 4]
 
@@ -57,7 +57,7 @@ export function LocalPlaybackBar({ totalFrames, fps }: Props) {
           type="button"
           onClick={() => seek(currentFrame - 1)}
           className={iconBtn}
-          title="上一帧 (←)"
+          title="Previous frame (←)"
         >
           <SkipBack size={14} />
         </button>
@@ -65,7 +65,7 @@ export function LocalPlaybackBar({ totalFrames, fps }: Props) {
           type="button"
           onClick={() => (isPlaying ? pause() : play())}
           className={iconBtn}
-          title={isPlaying ? '暂停 (Space)' : '播放 (Space)'}
+          title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
         >
           {isPlaying ? <Pause size={14} /> : <Play size={14} />}
         </button>
@@ -73,7 +73,7 @@ export function LocalPlaybackBar({ totalFrames, fps }: Props) {
           type="button"
           onClick={() => seek(currentFrame + 1)}
           className={iconBtn}
-          title="下一帧 (→)"
+          title="Next frame (→)"
         >
           <SkipForward size={14} />
         </button>
@@ -117,9 +117,7 @@ export function LocalPlaybackBar({ totalFrames, fps }: Props) {
       </select>
 
       {/* fps */}
-      <span className="font-mono text-[12px] text-[var(--ink-muted)] shrink-0">
-        {fps}fps
-      </span>
+      <span className="font-mono text-[12px] text-[var(--ink-muted)] shrink-0">{fps}fps</span>
     </div>
   )
 }

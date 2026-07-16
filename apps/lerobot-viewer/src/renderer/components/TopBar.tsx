@@ -1,7 +1,7 @@
+import type { DatasetMeta } from '@lerobot-viewer/reader'
 import { ArrowLeft, ArrowRight, MessageSquare, PanelLeft } from 'lucide-react'
-import type { DatasetMeta } from '@lerobot/lerobot-reader'
+import { useUIDispatch, useUIState } from '../state/UIState'
 import { Logo } from './Logo'
-import { useUIState, useUIDispatch } from '../state/UIState'
 
 interface TopBarProps {
   datasetPath: string | null
@@ -40,23 +40,23 @@ export function TopBar({
 
   return (
     <div className="flex items-center h-10 pl-4 pr-3 border-b border-[var(--border)] bg-[var(--bg)] shrink-0 gap-2">
-      {/* Logo（可点击回主页） */}
+      {/* Logo (click to return home) */}
       <button
         type="button"
         onClick={onGoHome}
-        title="回到主页"
+        title="Home"
         className="shrink-0 flex items-center justify-center rounded-md p-1 -m-1 text-[var(--ink)] hover:bg-[var(--bg-hover)] transition-colors"
       >
         <Logo size={18} color="currentColor" />
       </button>
 
-      {/* 侧栏折叠 + episode 前后：仅在进入回放时才有意义 */}
+      {/* Sidebar toggle + episode prev/next — only meaningful during playback */}
       {inPlayback && (
         <div className="flex items-center gap-0.5 shrink-0 ml-1">
           <button
             type="button"
             onClick={() => dispatch({ type: 'toggleSidebar' })}
-            title={sidebarCollapsed ? '展开侧栏' : '折叠侧栏'}
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             className={iconBtn}
           >
             <PanelLeft size={14} />
@@ -65,7 +65,7 @@ export function TopBar({
             type="button"
             onClick={() => canPrev && onSelectEpisode((selectedEpisode ?? 0) - 1)}
             disabled={!canPrev}
-            title="上一个 episode"
+            title="Previous episode"
             className={canPrev ? iconBtn : iconBtnDisabled}
           >
             <ArrowLeft size={14} />
@@ -74,7 +74,7 @@ export function TopBar({
             type="button"
             onClick={() => canNext && onSelectEpisode((selectedEpisode ?? 0) + 1)}
             disabled={!canNext}
-            title="下一个 episode"
+            title="Next episode"
             className={canNext ? iconBtn : iconBtnDisabled}
           >
             <ArrowRight size={14} />
@@ -82,7 +82,7 @@ export function TopBar({
         </div>
       )}
 
-      {/* 面包屑 */}
+      {/* Breadcrumb */}
       {datasetPath && (
         <>
           <div className="w-px h-4 bg-[var(--border)] shrink-0 ml-1" />
@@ -97,12 +97,8 @@ export function TopBar({
 
       <div className="flex-1" />
 
-      {/* AI 聊天 */}
-      <button
-        type="button"
-        title="AI 助手"
-        className={iconBtn}
-      >
+      {/* AI chat */}
+      <button type="button" title="AI assistant" className={iconBtn}>
         <MessageSquare size={14} />
       </button>
     </div>

@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { usePlayerContext } from './PlayerProvider'
 
-/** Stable ref，可安全放入 onClick / useEffect 依赖，不触发 re-render */
+/** Stable-identity actions — safe to pass to `onClick` or list in `useEffect` deps. */
 export function usePlayerActions() {
   const { clock } = usePlayerContext()
   const play = useCallback(() => clock.play(), [clock])

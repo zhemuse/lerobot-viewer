@@ -1,4 +1,4 @@
-import type { EpisodeInfo } from '@lerobot/lerobot-reader'
+import type { EpisodeInfo } from '@lerobot-viewer/reader'
 
 interface EpisodeListProps {
   episodes: EpisodeInfo[]
@@ -21,7 +21,7 @@ export function EpisodeList({ episodes, selected, onSelect, fps }: EpisodeListPr
   if (episodes.length === 0) {
     return (
       <div className="h-full flex items-center justify-center text-[11px] text-[var(--ink-subtle)] px-4 text-center">
-        无匹配 episode
+        No matching episodes
       </div>
     )
   }
@@ -32,6 +32,7 @@ export function EpisodeList({ episodes, selected, onSelect, fps }: EpisodeListPr
         const active = selected === ep.episodeIndex
         return (
           <button
+            type="button"
             key={ep.episodeIndex}
             onClick={() => onSelect(ep.episodeIndex)}
             title={ep.task || undefined}
@@ -42,9 +43,7 @@ export function EpisodeList({ episodes, selected, onSelect, fps }: EpisodeListPr
                 : 'text-[var(--ink)] hover:bg-[var(--bg-hover)]',
             ].join(' ')}
           >
-            <span className="font-mono text-[12px] truncate">
-              ep_{pad6(ep.episodeIndex)}
-            </span>
+            <span className="font-mono text-[12px] truncate">ep_{pad6(ep.episodeIndex)}</span>
             <span
               className={[
                 'font-mono text-[11px] shrink-0 tabular-nums',

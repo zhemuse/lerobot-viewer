@@ -1,7 +1,7 @@
-import { usePlayerContext } from './PlayerProvider'
 import type { ClockState } from '../core/types'
+import { usePlayerContext } from './PlayerProvider'
 
-/** 低频（每 throttle 帧更新一次），用于进度条、时间码等 UI */
+/** Throttled state (updates every N frames) — drives progress bar, timecode, etc. */
 export function usePlayerState(): ClockState {
   return usePlayerContext().state
 }

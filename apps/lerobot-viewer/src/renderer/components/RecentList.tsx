@@ -1,18 +1,18 @@
-import { useMemo, useState } from 'react'
 import { Folder, Search } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import type { RecentEntry } from '../../preload/index'
 
 function relativeTime(ts: number): string {
   const diff = Date.now() - ts
   const min = Math.floor(diff / 60_000)
-  if (min < 1) return '刚刚'
-  if (min < 60) return `${min} 分钟前`
+  if (min < 1) return 'just now'
+  if (min < 60) return `${min} min ago`
   const hour = Math.floor(min / 60)
-  if (hour < 24) return `${hour} 小时前`
+  if (hour < 24) return `${hour}h ago`
   const day = Math.floor(hour / 24)
-  if (day < 7) return `${day} 天前`
-  if (day < 30) return `${Math.floor(day / 7)} 周前`
-  return `${Math.floor(day / 30)} 月前`
+  if (day < 7) return `${day}d ago`
+  if (day < 30) return `${Math.floor(day / 7)}w ago`
+  return `${Math.floor(day / 30)}mo ago`
 }
 
 function shortenPath(p: string, maxLen = 56): string {
@@ -45,20 +45,20 @@ export function RecentList({ entries, onOpen, onRefresh }: RecentListProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-[18px] font-semibold text-[var(--ink)]">最近打开</h2>
+      <h2 className="text-[18px] font-semibold text-[var(--ink)]">Recent</h2>
 
       <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-panel)] overflow-hidden">
         {showFilter && (
           <div className="px-5 pt-5 pb-4 flex flex-col gap-1.5">
             <label htmlFor="recent-filter" className="text-[12px] text-[var(--ink-muted)]">
-              名称
+              Name
             </label>
             <div className="flex items-center gap-2 h-9 max-w-md px-3 rounded-md border border-[var(--border)] focus-within:border-[var(--accent)] transition-colors">
               <Search size={14} className="text-[var(--ink-subtle)] shrink-0" />
               <input
                 id="recent-filter"
                 type="text"
-                placeholder="按名称筛选"
+                placeholder="Filter by name"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="flex-1 bg-transparent text-[13px] text-[var(--ink)] placeholder:text-[var(--ink-subtle)] focus:outline-none"
@@ -68,9 +68,9 @@ export function RecentList({ entries, onOpen, onRefresh }: RecentListProps) {
         )}
 
         <div className="grid grid-cols-[220px_1fr_110px] px-5 h-10 items-center text-[11px] font-medium text-[var(--ink-muted)] border-b border-[var(--border)]">
-          <span>名称</span>
-          <span>路径</span>
-          <span className="text-right">最后打开</span>
+          <span>Name</span>
+          <span>Path</span>
+          <span className="text-right">Last opened</span>
         </div>
         <div className="flex flex-col">
           {filtered.map((e, idx) => (
@@ -105,14 +105,16 @@ export function RecentList({ entries, onOpen, onRefresh }: RecentListProps) {
           ))}
           {filtered.length === 0 && (
             <div className="px-5 h-12 flex items-center text-[12px] text-[var(--ink-subtle)]">
-              无匹配结果
+              No matches
             </div>
           )}
         </div>
       </div>
 
       {errorPath && (
-        <p className="text-[11px] text-[var(--danger)]">目录已不存在，已从列表移除</p>
+        <p className="text-[11px] text-[var(--danger)]">
+          Folder no longer exists — removed from the list
+        </p>
       )}
     </div>
   )

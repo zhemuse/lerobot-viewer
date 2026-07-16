@@ -1,77 +1,66 @@
-# @lerobot/player — 多模态数据播放器 SDK 设计文档
+# @lerobot-viewer/player — SDK design
 
-## 1. 概述
+**[中文](DESIGN.zh-CN.md) | English**
 
-`@lerobot/player` 是一个面向 [LeRobot](https://github.com/huggingface/lerobot) 数据集的多模态回放 SDK，用于在 Web 端同步播放机器人采集的多路数据。
+`@lerobot-viewer/player` is a multimodal playback SDK for [LeRobot](https://github.com/huggingface/lerobot) datasets. A LeRobot episode bundles heterogeneous streams — multi-camera video, per-frame joint state (`observation.state`), per-frame commanded action, and a URDF robot description — all of which must play back **strictly time-aligned** under a single clock.
 
-LeRobot 是 Hugging Face 开源的具身智能框架，其数据集以 Episode 为单位存储，每个 Episode 包含：
+That's the one problem this SDK solves. Everything else is a consequence.
 
-- 多路摄像头视频（`observation.images.*`）
-- 每帧关节状态（`observation.state`，即实际位置）
-- 每帧控制动作（`action`，即期望指令）
-- 机器人 URDF 模型描述
-
-SDK 的核心任务是将上述多路数据在时间轴上严格对齐，以统一时钟驱动播放：
-
-- **视频流**：多路摄像头画面（RGB / 深度等）
-- **关节曲线**：关节 State（实测位置）与 Action（指令位置）的时序对比曲线
-- **3D 机器人模型**：基于 URDF 的实时姿态可视化，随帧驱动关节角度
-- **帧数据检视**：逐帧查看各关节的 State / Action 数值
-
-SDK 以 React 库的形式发布（`peerDependencies: react >=18`），提供 **Core / Hooks / UI** 三层 API，应用层只需把 LeRobot API 返回的帧数据转换为 `EpisodeFrame[]`，无需关心时钟同步细节。SDK 同时支持 **Web 浏览器**和 **Electron 桌面客户端**两种宿主环境。
+The SDK ships as a React library (`react >=18` peer) and runs unchanged in both the browser and Electron.
 
 ---
 
-## 2. 整体架构
+## 1. Architecture at a glance
+
+Three layers, each narrower in responsibility than the one below it:
 
 ```
-┌─────────────────────────────────────────────┐
-│                   应用层（Feature）           │
-│  Web：从 HTTP API 拉取数据                   │
-│  Electron：Node 端读取/解析后经 IPC/RPC 传入 │
-│  统一转换为 EpisodeFrame[] 传给 SDK           │
-└───────────────────────┬─────────────────────┘
-                        │ props
-┌───────────────────────▼─────────────────────┐
-│              UI 面板层（ui/）                  │
-│  VideoPanel  JointCurvesPanel  RobotViewerPanel  FrameInspectorPanel  │
-│                PlaybackControls                │
-└───────────────────────┬─────────────────────┘
-                        │ useSubscribe / usePlayerState / usePlayerActions
-┌───────────────────────▼─────────────────────┐
-│              Hooks 层（hooks/）               │
-│  PlayerProvider  usePlayerState  usePlayerActions  useSubscribe  useVideoChannel  │
-└───────────────────────┬─────────────────────┘
-                        │ clock.subscribe / clock.onStateChange
-┌───────────────────────▼─────────────────────┐
-│           Core 层（core/）                    │
-│              PlaybackClock                   │
-└─────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────┐
+│                Application layer                    │
+│  Web:      pull from HTTP API                       │
+│  Electron: main-process reader → IPC → renderer     │
+│  Both convert their data into EpisodeFrame[]        │
+└──────────────────────┬─────────────────────────────┘
+                       │ props
+┌──────────────────────▼─────────────────────────────┐
+│              UI panels (ui/)                        │
+│  VideoPanel  JointCurvesPanel  RobotViewerPanel     │
+│  FrameInspectorPanel   PlaybackControls             │
+└──────────────────────┬─────────────────────────────┘
+                       │ useSubscribe / usePlayerState / usePlayerActions
+┌──────────────────────▼─────────────────────────────┐
+│               Hooks (hooks/)                        │
+│  PlayerProvider  usePlayerState  usePlayerActions   │
+│  useSubscribe    useVideoChannel                    │
+└──────────────────────┬─────────────────────────────┘
+                       │ clock.subscribe / clock.onStateChange
+┌──────────────────────▼─────────────────────────────┐
+│                Core (core/)                         │
+│                 PlaybackClock                       │
+└────────────────────────────────────────────────────┘
 ```
 
-三层职责分离：
-
-| 层 | 职责 |
+| Layer | Responsibility |
 |---|---|
-| **Core** | 纯 JS 时钟，不依赖 React，可在 Web Worker、Electron 主/渲染进程中复用 |
-| **Hooks** | 把时钟状态桥接进 React 生命周期，控制渲染频率 |
-| **UI** | 可组合的面板组件，消费 Hooks，零布局耦合 |
+| **Core** | Pure TS clock. No React, no DOM assumptions. Reusable in workers, Node, or a future non-React port. |
+| **Hooks** | Bridge clock into React lifecycle. Explicitly split high-frequency (rAF) vs low-frequency (throttled) channels so consumers pick what they need. |
+| **UI** | Composable panels. Each is a `PanelShell` around a subscriber — zero layout coupling. |
+
+Also shipped: `base/` (framework-agnostic primitives like `IDisposable` / `DisposableStore`), consumable via the `@lerobot-viewer/player/base` subpath.
 
 ---
 
-## 3. Core 层：PlaybackClock
+## 2. Core: `PlaybackClock`
 
-### 3.1 设计目标
+The clock is the SDK's heartbeat. Every panel (video, chart, 3D) reads from **one** `PlaybackClock` instance — that's what makes synchronization trivial.
 
-时钟是整个 SDK 的心跳。所有面板（视频、图表、3D）都以同一个 `PlaybackClock` 实例为时间基准，保证多路数据严格同步。
-
-### 3.2 核心数据结构
+### 2.1 Data model
 
 ```ts
 interface ClockState {
-  currentFrame: number   // 当前帧索引
+  currentFrame: number
   isPlaying: boolean
-  rate: number           // 播放倍速（0.5 / 1 / 2 / ...）
+  rate: number           // 0.5 / 1 / 2 / …
   totalFrames: number
   fps: number
 }
@@ -79,253 +68,213 @@ interface ClockState {
 interface ClockOptions {
   totalFrames: number
   fps: number
-  throttle?: number      // 状态通知节流（帧数间隔，默认 3）
+  throttle?: number      // frames between low-freq notifications (default 3)
 }
 ```
 
-### 3.3 双订阅机制
+### 2.2 Two subscription channels
 
-PlaybackClock 维护两套独立的订阅者集合，解决"高频驱动"与"低频刷新 React"之间的矛盾：
+`PlaybackClock` maintains two independent listener sets. This resolves the natural tension between "drive at rAF" and "update React sparingly":
 
-| 订阅类型 | 触发时机 | 典型消费者 |
+| Channel | Frequency | Typical consumer |
 |---|---|---|
-| `subscribe(FrameCallback)` | 每个 RAF 帧（约 60fps） | 3D 机器人姿态、图表 playhead |
-| `onStateChange(cb)` | 每 `throttle` 帧一次（约 20fps） | 进度条、时间码、播放/暂停按钮 |
+| `subscribe(FrameCallback)` | Every rAF (~60 Hz) | 3D pose driver, chart playhead redraw |
+| `onStateChange(cb)` | Every `throttle` frames (~20 Hz) | Progress bar, timecode, play/pause button |
 
-这样 React 组件最多以 20fps 重渲，而 3D 和图表仍以原生帧率驱动，避免不必要的虚拟 DOM diff。
+Result: React re-renders at most 20 Hz, while 3D and chart still animate at native frame rate — no virtual-DOM diffing in the hot path.
 
-### 3.4 时间驱动（rAF loop）
+### 2.3 Wall-clock–driven rAF loop
 
 ```
 play() → requestAnimationFrame(_tick)
   _tick(timestamp):
     delta = timestamp - lastTimestamp
     currentTime += delta * rate
-    if (到达终点) → 停止 + 通知
-    notifySubscribers()          // 高频，每帧
+    if (reached end) → stop + notify
+    notifySubscribers()          // high-freq
     if (framesSinceNotify >= throttle):
-      notifyStateListeners()     // 低频，节流
-    requestAnimationFrame(_tick) // 继续
+      notifyStateListeners()     // low-freq
+    requestAnimationFrame(_tick) // continue
 ```
 
-时钟以**实际经过的墙钟时间**驱动，而非帧计数累加，因此倍速切换（`setRate`）无需重启循环。
+Time advances by **elapsed wall time**, not by frame count. Rate changes take effect on the next tick with no need to restart the loop.
 
-### 3.5 页面可见性处理
+### 2.4 Backgrounded-tab handling
 
-当浏览器标签页切换到后台再回前台时，`visibilitychange` 事件将 `_lastTimestamp` 重置为 `null`，下一个 tick 跳过 delta 计算，防止时钟跳帧。
+On `visibilitychange` (tab returns), `_lastTimestamp` resets to `null`. The next tick skips its delta calculation, which prevents the clock from lurching forward by all the elapsed hidden time.
 
-### 3.6 currentTimeRef（零开销直读）
+### 2.5 `currentTimeRef` — the zero-overhead escape hatch
 
 ```ts
 readonly currentTimeRef: { current: number } = { current: 0 }
 ```
 
-3D Viewer 的 `usePlaybackSync` 在 R3F `useFrame` 中直读此 ref，完全绕过 React 订阅，无额外开销。
+`RobotViewerPanel`'s `usePlaybackSync` reads this directly inside R3F's `useFrame`. No subscription, no React reconciliation — just a pointer.
 
 ---
 
-## 4. Hooks 层
+## 3. Hooks
 
-### 4.1 PlayerProvider / PlayerContext
+### 3.1 `PlayerProvider` / `usePlayerContext`
 
 ```tsx
-<PlayerProvider clock={clock}>
-  {children}
-</PlayerProvider>
+<PlayerProvider clock={clock}>{children}</PlayerProvider>
 ```
 
-`PlayerProvider` 接收外部创建的 `PlaybackClock` 实例，通过 `onStateChange` 订阅低频状态，并以 `useState` 驱动 React 重渲染。子树中任意组件均可通过 `usePlayerContext()` 获取 `{ clock, state }`。
+The provider does not own the clock's lifecycle. The application creates it (typically in a `useMemo`) and disposes it (`clock.destroy()`) on unmount / episode change. That's deliberate: the SDK doesn't guess when the clock should be recreated.
 
-**关键设计**：clock 实例由应用层创建并传入，Provider 不负责生命周期管理，便于在 episode 切换时销毁重建。
+### 3.2 `usePlayerState()` — throttled
 
-### 4.2 usePlayerState
+Returns the throttled `ClockState`. Meant for progress bar / timecode / play indicator UIs.
 
-```ts
-function usePlayerState(): ClockState
-```
+### 3.3 `usePlayerActions()` — stable
 
-返回低频（节流后）的 `ClockState`，专供进度条、时间码等 UI 消费。每次重渲染只更新实际变化的状态字段。
+Returns `{ play, pause, seek, setRate }` with stable identities via `useCallback`. Safe to put in `useEffect` deps or hand to `onClick`.
 
-### 4.3 usePlayerActions
+### 3.4 `useSubscribe(cb)` — high frequency
 
-```ts
-function usePlayerActions(): { play, pause, seek, setRate }
-```
+Fires the callback on every rAF tick with **zero React re-renders**. Internally holds `cb` in a ref, so callers don't need to memoize.
 
-返回稳定引用的操作函数（`useCallback` 封装），可安全放入 `onClick` 或 `useEffect` 依赖数组，不会引起额外重渲染。
+### 3.5 `useVideoChannel(fps)`
 
-### 4.4 useSubscribe
+Multi-`<video>` registration hub. Subscribes to the clock and does three things:
 
-```ts
-function useSubscribe(cb: FrameCallback): void
-```
+1. **Play/pause & rate sync**: piggybacks on the low-frequency channel.
+2. **Drift correction**: on a 10 Hz interval (only while playing), compares each video's `currentTime` against the clock and snaps back if the drift exceeds `2/fps` seconds.
+3. **Registration**: `registerVideo(key, null)` auto-unregisters — pair with a React `ref` callback for clean unmounts.
 
-高频订阅，每 RAF 帧回调，**零 React 重渲染**。内部用 `useRef` 持有最新 `cb`，调用方无需 `useCallback` 包裹。适合驱动图表 playhead 等命令式操作。
-
-### 4.5 useVideoChannel
-
-```ts
-function useVideoChannel(fps: number): {
-  registerVideo: (key: string, el: HTMLVideoElement | null) => void
-}
-```
-
-多路 `<video>` 注册中心，订阅时钟做两件事：
-
-1. **播放/暂停 & 倍速同步**：监听低频状态变化，批量同步所有已注册的 video 元素。
-2. **漂移纠偏**：高频订阅 `clock.subscribe`，检测 `video.currentTime` 与时钟时间的偏差，超过 `2/fps` 秒时强制 seek 修正。
-
-`registerVideo(key, null)` 自动注销，配合 `ref` 回调实现组件卸载时的清理。
-
-### 4.6 PanelGridContext
-
-```ts
-const PanelGridProvider = PanelGridContext.Provider
-function usePanelGridRef(): RefObject<HTMLDivElement | null> | null
-```
-
-将面板网格容器的 DOM ref 注入 Context，供 `PanelShell` 的全屏逻辑读取挂载点（预留扩展，当前全屏采用 absolute overlay 实现）。
+The 10 Hz cadence is deliberate. Earlier iterations ran per-rAF and became a hot spot when N cameras > 4.
 
 ---
 
-## 5. UI 层
+## 4. UI
 
-所有面板均以 `PanelShell` 作为统一容器，具备标题栏、徽章、全屏切换等通用能力。
+Every panel wraps its content in `PanelShell`, which provides a title bar, badges, and fullscreen toggle.
 
-### 5.1 PanelShell
+### 4.1 `PanelShell`
 
 ```
 ┌────────────────────────────────────┐
-│ [icon] 标题  [badge]  [···] [⛶]   │  ← 工具栏，固定高度 28px
+│ [icon] Title  [badge]  [···] [⛶]   │  ← toolbar, 28px
 ├────────────────────────────────────┤
 │                                    │
-│         children（内容区）          │  ← flex-1，相对定位，overflow hidden
+│         children                   │  ← flex-1, position:relative
 │                                    │
 └────────────────────────────────────┘
 ```
 
-全屏时将面板设为 `position: absolute; inset: 0; z-index: 50`，以 `motion/react` 的 `layout` 动画过渡，ESC 键退出。
+Fullscreen mounts the panel as `position: absolute; inset: 0; z-index: 50`, animated with `motion/react`'s `layout` prop. ESC exits.
 
-### 5.2 PlaybackControls
+### 4.2 `PlaybackControls`
 
-播放控制栏，消费 `usePlayerState` 和 `usePlayerActions`：
+Consumes `usePlayerState` and `usePlayerActions`. Provides:
 
-- 上一帧 / 播放暂停 / 下一帧 按钮
-- 帧索引、时间码（`mm:ss.cc` 格式）、FPS 显示
-- 倍速选择器（0.5× / 1× / 1.5× / 2× / 3× / 5× / 10×）
-- 可拖动进度条（Base UI Slider）
-- 可选的 `strip` 插槽（用于嵌入额外内容，如帧缩略图）
+- Prev / play-pause / next-frame buttons
+- Frame index, timecode (`mm:ss.cc`), FPS
+- Rate selector (0.5× / 1× / 1.5× / 2× / 3× / 5× / 10×)
+- Draggable scrubber (Base UI Slider)
+- Optional `strip` slot for embedding extras (e.g. frame thumbnails)
 
-### 5.3 VideoPanel
+### 4.3 `VideoPanel`
 
 ```tsx
 <VideoPanel topicKey="observation.images.top_rgb" src={url} fps={30} />
 ```
 
-通过 `useVideoChannel` 注册 `<video>` 元素，时钟驱动播放/暂停/倍速/漂移纠偏，无需手动管理 video 状态。标题从 `topicKey` 中截取最后一段显示。
+Registers its `<video>` with `useVideoChannel`. The clock does the rest — no imperative video control at the call site.
 
-### 5.4 JointCurvesPanel
+### 4.4 `JointCurvesPanel`
 
-基于 [uPlot](https://github.com/leeoniya/uPlot) 的高性能时序图表面板。
+[uPlot](https://github.com/leeoniya/uPlot)-based time-series chart. Solid line = state, dashed = action.
 
-**数据流**：
+**Data flow**:
 ```
-EpisodeFrame[] → downsampleColumnar（最多 1500 点）→ uPlot.AlignedData
+EpisodeFrame[] → downsampleColumnar (≤ 1500 points) → uPlot.AlignedData
 ```
 
-**关键能力**：
+Key features:
 
-| 能力 | 实现 |
+| Feature | How |
 |---|---|
-| 实线 = 状态（State）、虚线 = 动作（Action） | `series[].dash` 区分 |
-| 关节颜色一致性 | `jointColor(index)` 调色板 |
-| 关节筛选器 | `JointSelector` Popover，支持单选 / 全选 |
-| Playhead 竖线 | `uPlot hooks.draw` 在 canvas 上手绘黄色虚线 |
-| 点击图表 seek | 鼠标 `mousedown` 解析 x 坐标还原帧索引，调用 `seek()` |
-| Tooltip | 鼠标悬浮时显示当前帧各关节数值，点击后锁定 |
-| 自适应尺寸 | `ResizeObserver` 触发 `plot.setSize()` |
+| State vs action | `series[].dash` |
+| Consistent joint colors | `jointColor(index)` palette |
+| Joint filter | `JointSelector` popover |
+| Playhead cursor | Custom draw hook — yellow dashed vertical line |
+| Click-to-seek | `mousedown` → `posToVal` → nearest-frame binary search → `seek()` |
+| Tooltip | Per-joint values on hover; locked on click |
+| Responsive sizing | `ResizeObserver` → `plot.setSize()` |
 
-**降采样算法**（`downsampleColumnar`）：
+**Downsampling** (`downsampleColumnar`): divides frames into N equal-width buckets, retains the global min/max index per bucket across all joint columns. O(n·cols), preserves waveform extremes. Good enough when joints are correlated (same robot).
 
-将全量帧划分为 N 个等宽桶，每桶保留跨所有关节的全局 min/max 索引点，确保波形峰谷不丢失。时间复杂度 O(n·cols)，适合关节运动相关性强的场景。
+### 4.5 `RobotViewerPanel`
 
-### 5.5 RobotViewerPanel
+React-Three-Fiber + `urdf-loader` 3D viewport.
 
-基于 React Three Fiber + URDF Loader 的 3D 机器人可视化面板。
-
-**加载流程**：
-
+**Load flow**:
 ```
 urdfUrl → URDFLoader.loadAsync()
-  └─ loadMeshCb:
-       ├─ .stl → STLLoader + geometry cache（Map<cacheKey, Promise>）
-       └─ .dae → ColladaLoader
-  → 计算 BoundingBox → fitCameraToBox（相机自动适配）
-  → setRobot(r)（触发渲染）
+  loadMeshCb:
+    .stl → STLLoader + effect-scoped geometry cache
+    .dae → ColladaLoader
+  → compute bounding box → fitCameraToBox (auto-fit camera)
+  → render
 ```
 
-**姿态同步**（`usePlaybackSync`）：
+**Pose sync** (`usePlaybackSync`): inside R3F's `useFrame`, reads `clock.currentTimeRef.current`, does a binary search over `frames`, and calls `robot.setJointValue()` only when the frame index changes. No React state involvement.
 
-在 R3F `useFrame` 中直读 `clock.currentTimeRef.current`（无订阅开销），二分查找最近帧，仅在帧索引变化时调用 `robot.setJointValue()`，避免冗余写入。
+**Coordinate frame**: URDF is Z-up; Three.js is Y-up. Two rotations (`-π/2` around X, `+π/2` around Y) are pre-composed into a single quaternion applied at the root group.
 
-**坐标系转换**：
+**Interaction**: hover to highlight a link's meshes (including fixed children); tooltip shows link name, parent joint type, mass.
 
-URDF 坐标为 Z 轴朝上，需转换为 Three.js 的 Y 轴朝上，同时面向摄像机方向：
+**Theme**: accepts `theme?: 'light' | 'dark' | 'system' | 'dom-class'`, defaults to `'system'`. The library does not couple to any specific ThemeProvider.
 
-```ts
-// Z → Y：绕 X 轴旋转 -90°
-// 面向摄像机：绕 Y 轴旋转 +90°
-// 两次旋转预计算为单个四元数，挂在根 group 上
-const COMBINED_QUATERNION = _qF.clone().multiply(_qZ)
-```
+**STL cache**: geometry cache is **scoped to the load effect**, not module-level. On URDF switch or unmount the cache disposes every geometry (`.dispose()`) and resets. This prevents unbounded GPU memory growth when users switch datasets.
 
-**交互**：鼠标悬浮时高亮对应 Link 的所有 Mesh（包含 fixed 子关节），显示 Link 名称、父关节类型、质量等元数据。
+### 4.6 `FrameInspectorPanel`
 
-### 5.6 FrameInspectorPanel
-
-简单的逐帧数据表格，消费低频 `usePlayerState().currentFrame`，从 `frames[]` 中直接索引当前帧，展示每个关节的 State / Action 数值（4 位小数）。
+Trivial per-frame table. Reads `usePlayerState().currentFrame`, indexes into `frames`, renders each joint's state / action to four decimals.
 
 ---
 
-## 6. 关键数据类型
+## 5. Core types
 
 ```ts
-/** 单帧归一化数据，Feature 层负责从 API 转换 */
+/** Per-frame data, produced by the application layer. */
 interface EpisodeFrame {
-  frameIndex: number       // 帧序号（从 0 开始）
-  timestamp: number        // 秒，与视频时间对齐
-  jointPositions: number[] // 关节状态角度（弧度）
-  actionPositions: number[]// 期望动作角度（弧度）
+  frameIndex: number
+  timestamp: number         // seconds — must align with video timing
+  jointPositions: number[]  // state, radians
+  actionPositions: number[] // action, radians
 }
 
-/** URDF 配置 */
+/** URDF configuration. */
 interface UrdfConfig {
   urdfUrl: string
-  packages: Record<string, string>  // 包名 → CDN/本地 URL 前缀
+  packages: Record<string, string>  // package name → URL prefix
   jointNames: string[]
 }
 ```
 
 ---
 
-## 7. 性能设计摘要
+## 6. Performance notes
 
-| 问题 | 方案 |
+| Concern | Approach |
 |---|---|
-| 60fps 时钟不应引起 60fps React 重渲 | `throttle` 参数节流 `onStateChange`，默认每 3 帧通知一次 |
-| 多路视频时间漂移 | `useVideoChannel` 高频检测 `video.currentTime` 偏差并纠偏 |
-| 3D 关节更新无需走 React | `currentTimeRef` 直读 + R3F `useFrame`，完全绕过 React |
-| 大数据集图表卡顿 | `downsampleColumnar` 将帧数压缩至最多 1500 点 |
-| uPlot 系列可见性变更 | `prevSeriesShowRef` diff，仅对变化的 series 调用 `setSeries` |
-| URDF Mesh 重复加载 | STL geometry 按 `(path, authToken)` 缓存 `Promise<BufferGeometry>` |
-| 回调函数进入 useEffect deps 导致重加载 | 所有外部 callback 以 ref 持有，不进入 deps 数组 |
+| 60 Hz clock should not force 60 Hz React re-renders | `throttle` (default 3) on the low-freq channel |
+| Multi-video drift | 10 Hz interval + threshold-based correction (not per-frame) |
+| 3D joint updates should not touch React | R3F `useFrame` reads `currentTimeRef` directly |
+| Large datasets pin the chart | `downsampleColumnar` caps at ~1500 points |
+| uPlot series toggle | `prevSeriesShowRef` diff; `setSeries` only for series that actually changed |
+| STL mesh reuse within a URDF | Effect-scoped cache with `.dispose()` on cleanup |
+| Callback churn triggering effect re-runs | Callbacks kept in refs, never listed in deps |
 
 ---
 
-## 8. 使用示例
+## 7. Usage
 
 ```tsx
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import {
   PlaybackClock,
   PlayerProvider,
@@ -335,28 +284,22 @@ import {
   JointCurvesPanel,
   RobotViewerPanel,
   FrameInspectorPanel,
-} from '@lerobot/player'
-import type { EpisodeFrame, UrdfConfig } from '@lerobot/player'
+} from '@lerobot-viewer/player'
+import type { EpisodeFrame, UrdfConfig } from '@lerobot-viewer/player'
 
 export function EpisodePlayer({
-  frames,
-  videoUrls,
-  urdf,
+  frames, videoUrls, urdf,
 }: {
   frames: EpisodeFrame[]
   videoUrls: Record<string, string>
   urdf: UrdfConfig
 }) {
   const gridRef = useRef<HTMLDivElement>(null)
-
-  // 随 frames 变化重建时钟
   const clock = useMemo(
     () => new PlaybackClock({ totalFrames: frames.length, fps: 50 }),
     [frames.length],
   )
   useEffect(() => () => clock.destroy(), [clock])
-
-  const jointNames = urdf.jointNames
 
   return (
     <PanelGridProvider value={gridRef}>
@@ -367,17 +310,13 @@ export function EpisodePlayer({
           ))}
           <JointCurvesPanel
             frames={frames}
-            jointNames={jointNames}
+            jointNames={urdf.jointNames}
             fps={50}
             totalFrames={frames.length}
             isLoading={false}
           />
-          <RobotViewerPanel
-            frames={frames}
-            jointNames={jointNames}
-            urdf={urdf}
-          />
-          <FrameInspectorPanel frames={frames} jointNames={jointNames} />
+          <RobotViewerPanel frames={frames} jointNames={urdf.jointNames} urdf={urdf} />
+          <FrameInspectorPanel frames={frames} jointNames={urdf.jointNames} />
         </div>
         <PlaybackControls totalFrames={frames.length} fps={50} />
       </PlayerProvider>
@@ -388,13 +327,12 @@ export function EpisodePlayer({
 
 ---
 
-## 9. 扩展点
+## 8. Extension points
 
-| 扩展需求 | 建议 |
+| Extension | Approach |
 |---|---|
-| 新增面板类型（点云、力矩曲线等） | 实现 `useSubscribe` 高频消费 + `PanelShell` 包裹，无需修改 Core |
-| 多 episode 同屏对比 | 创建两个 `PlaybackClock` 实例，嵌套两个 `PlayerProvider` |
-| 帧缩略图时间轴 | 通过 `PlaybackControls` 的 `strip` prop 插入自定义内容 |
-| 自定义倍速选项 | 当前硬编码在 `PlaybackControls`，可提取为 prop |
-| SSR / Next.js 兼容 | `PlaybackClock` 已做 `typeof document !== 'undefined'` 防护；面板组件添加 `'use client'` 指令 |
-| Electron 桌面客户端 | Core 层无浏览器特定 API 依赖（rAF / visibilitychange 均有守卫），可直接在 Electron 渲染进程中使用；视频 src 支持本地 `file://` 路径或自定义协议 |
+| New panel type (point cloud, force curves, …) | Subscribe with `useSubscribe`, wrap in `PanelShell`. Core untouched. |
+| Multi-episode compare | Nest two `PlayerProvider`s with independent clocks. |
+| Custom transport strip (e.g. thumbnails) | Pass to `PlaybackControls`'s `strip` prop. |
+| SSR / Next.js | `PlaybackClock` guards `document` / `requestAnimationFrame`; panel modules ship `'use client'`. |
+| Electron desktop | Core has no browser-specific APIs; video `src` can point at custom protocols like `lerobot://`. |

@@ -11,11 +11,14 @@ export interface ClockState {
 export interface ClockOptions {
   totalFrames: number
   fps: number
-  /** 低频通知间隔（帧数），默认 3（约 20fps 通知 React） */
+  /** State-notification interval, in frames. Defaults to 3 (~20 Hz to React). */
   throttle?: number
 }
 
-/** 单帧数据，由 UI 面板消费。Feature 层负责把 API 数据转换为此形状。 */
+/**
+ * A single frame consumed by the UI panels. Callers convert their raw API
+ * data into this shape before handing it to the SDK.
+ */
 export interface EpisodeFrame {
   frameIndex: number
   timestamp: number
@@ -23,10 +26,9 @@ export interface EpisodeFrame {
   actionPositions: number[]
 }
 
-/** URDF 配置，由 RobotViewerPanel 消费 */
+/** URDF configuration consumed by `RobotViewerPanel`. */
 export interface UrdfConfig {
   urdfUrl: string
   packages: Record<string, string>
   jointNames: string[]
 }
-

@@ -1,16 +1,16 @@
 'use client'
 import { useCallback, useMemo, useRef, useState } from 'react'
-import uPlot from 'uplot'
-import { cn } from '../../lib/utils'
+import type uPlot from 'uplot'
 import { Button } from '../../components/ui/button'
-import { useSubscribe } from '../../hooks/useSubscribe'
-import { usePlayerActions } from '../../hooks/usePlayerActions'
-import { PanelShell } from '../PanelShell'
-import { UPlotChart } from './UPlotChart'
 import type { EpisodeFrame } from '../../core/types'
+import { usePlayerActions } from '../../hooks/usePlayerActions'
+import { useSubscribe } from '../../hooks/useSubscribe'
+import { cn } from '../../lib/utils'
+import { PanelShell } from '../PanelShell'
 import { jointColor } from './colors'
 import { downsampleColumnar } from './downsample'
 import { JointSelector } from './JointSelector'
+import { UPlotChart } from './UPlotChart'
 
 const MAX_POINTS = 1500
 
@@ -33,9 +33,7 @@ export function JointCurvesPanel({
   const plotRef = useRef<uPlot | null>(null)
   const setPlayheadRef = useRef<((t: number) => void) | null>(null)
 
-  const [visibleJoints, setVisibleJoints] = useState<number[]>(() =>
-    jointNames.map((_, i) => i)
-  )
+  const [visibleJoints, setVisibleJoints] = useState<number[]>(() => jointNames.map((_, i) => i))
   const [hasManualSelection, setHasManualSelection] = useState(false)
   const [showState, setShowState] = useState(true)
   const [showAction, setShowAction] = useState(true)
@@ -89,9 +87,7 @@ export function JointCurvesPanel({
   useSubscribe((frame) => {
     const setPlayhead = setPlayheadRef.current
     if (!setPlayhead) return
-    const tPlay = totalFrames > 1
-      ? tMin + (frame / (totalFrames - 1)) * (tMax - tMin)
-      : tMin
+    const tPlay = totalFrames > 1 ? tMin + (frame / (totalFrames - 1)) * (tMax - tMin) : tMin
     setPlayhead(tPlay)
   })
 
@@ -143,7 +139,7 @@ export function JointCurvesPanel({
             onClick={() => setShowState((v) => !v)}
           >
             <span className="inline-block w-3 h-px bg-current" />
-            状态
+            State
           </Button>
           <Button
             variant="outline"
@@ -153,7 +149,7 @@ export function JointCurvesPanel({
             onClick={() => setShowAction((v) => !v)}
           >
             <span className="inline-block w-3 border-t border-dashed border-current" />
-            动作
+            Action
           </Button>
         </div>
         <div className="flex-1 min-h-0">

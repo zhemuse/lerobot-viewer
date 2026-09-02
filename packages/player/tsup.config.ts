@@ -1,34 +1,21 @@
 import { defineConfig } from 'tsup'
+import { sharedOptions } from './tsup.shared'
 
+/**
+ * Server-safe entries: pure TypeScript, no React state, no DOM ownership.
+ * These must NOT carry a "use client" directive — they stay importable from
+ * React Server Components and plain Node.
+ *
+ * The client entries are built by `tsup.client.config.ts` in a second, separate
+ * pass. Two passes rather than one array config because only this pass may
+ * `clean` the output folder; running both concurrently races the shared `dist/`
+ * and the dts rollup fails on files that were just deleted.
+ */
 export default defineConfig({
+  ...sharedOptions,
   entry: {
-    index: 'index.ts',
+    'core/index': 'core/index.ts',
     'base/index': 'base/index.ts',
-    'core/index': 'core/PlaybackClock.ts',
-    'hooks/index': 'hooks/index.ts',
-    'ui/index': 'ui/index.ts',
   },
-  format: ['esm', 'cjs'],
-  outExtension: ({ format }) => ({ js: format === 'cjs' ? '.cjs' : '.mjs' }),
-  dts: true,
-  sourcemap: true,
   clean: true,
-  target: 'es2020',
-  platform: 'browser',
-  external: [
-    'react',
-    'react-dom',
-    'three',
-    '@react-three/fiber',
-    '@react-three/drei',
-    '@base-ui/react',
-    'urdf-loader',
-    'uplot',
-    'motion',
-    'lucide-react',
-    'class-variance-authority',
-    'clsx',
-    'tailwind-merge',
-  ],
-  injectStyle: false,
 })

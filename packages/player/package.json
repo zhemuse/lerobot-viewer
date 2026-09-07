@@ -39,7 +39,8 @@
     "components",
     "lib",
     "index.ts",
-    "README.md"
+    "README.md",
+    "scripts"
   ],
   "publishConfig": {
     "access": "public",
@@ -100,7 +101,7 @@
     }
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && node scripts/add-client-directive.mjs",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
@@ -108,7 +109,9 @@
     "react-dom": ">=18",
     "three": ">=0.160.0",
     "@react-three/fiber": ">=9",
-    "@react-three/drei": ">=10"
+    "@react-three/drei": ">=10",
+    "urdf-loader": ">=0.12",
+    "uplot": ">=1.6"
   },
   "peerDependenciesMeta": {
     "@react-three/fiber": {
@@ -119,6 +122,12 @@
     },
     "three": {
       "optional": true
+    },
+    "urdf-loader": {
+      "optional": true
+    },
+    "uplot": {
+      "optional": true
     }
   },
   "dependencies": {
@@ -127,9 +136,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^1.14.0",
     "motion": "^12.38.0",
-    "tailwind-merge": "^3.0.0",
-    "uplot": "^1.6.31",
-    "urdf-loader": "^0.12.5"
+    "tailwind-merge": "^3.0.0"
   },
   "devDependencies": {
     "@react-three/drei": "^10.7.7",
@@ -140,6 +147,8 @@
     "react": "^19",
     "react-dom": "^19",
     "three": "^0.175.0",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "uplot": "^1.6.31",
+    "urdf-loader": "^0.12.5"
   }
 }

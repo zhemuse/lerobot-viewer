@@ -76,6 +76,31 @@ importers:
         specifier: ^6.0.0
         version: 6.4.3(@types/node@26.1.1)(jiti@2.7.0)(lightningcss@1.32.0)
 
+  apps/web:
+    dependencies:
+      react:
+        specifier: ^19.0.0
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.7(react@19.2.7)
+    devDependencies:
+      '@types/react':
+        specifier: ^19.2.17
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.17)
+      '@vitejs/plugin-react':
+        specifier: ^4.3.4
+        version: 4.7.0(vite@6.4.3(@types/node@26.1.1)(jiti@2.7.0)(lightningcss@1.32.0))
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vite:
+        specifier: ^6.0.0
+        version: 6.4.3(@types/node@26.1.1)(jiti@2.7.0)(lightningcss@1.32.0)
+
   packages/player:
     dependencies:
       '@base-ui/react':
@@ -96,12 +121,6 @@ importers:
       tailwind-merge:
         specifier: ^3.0.0
         version: 3.6.0
-      uplot:
-        specifier: ^1.6.31
-        version: 1.6.32
-      urdf-loader:
-        specifier: ^0.12.5
-        version: 0.12.7(three@0.175.0)
     devDependencies:
       '@react-three/drei':
         specifier: ^10.7.7
@@ -130,6 +149,12 @@ importers:
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
+      uplot:
+        specifier: ^1.6.31
+        version: 1.6.32
+      urdf-loader:
+        specifier: ^0.12.5
+        version: 0.12.7(three@0.175.0)
 
   packages/reader:
     dependencies:

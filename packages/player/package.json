@@ -39,7 +39,8 @@
     "components",
     "lib",
     "index.ts",
-    "README.md"
+    "README.md",
+    "scripts"
   ],
   "publishConfig": {
     "access": "public",
@@ -100,7 +101,7 @@
     }
   },
   "scripts": {
-    "build": "tsup && tsup --config tsup.client.config.ts",
+    "build": "tsup && node scripts/add-client-directive.mjs",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {

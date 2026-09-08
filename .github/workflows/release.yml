@@ -33,10 +33,16 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter lerobot-viewer dist
+      # Only the installers. electron-builder also leaves mac/, win-unpacked/ and
+      # linux-unpacked/ next to them, which triples the upload and puts
+      # directories in front of `gh release create`, which only takes files.
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.name }}
-          path: apps/lerobot-viewer/release/*
+          path: |
+            apps/lerobot-viewer/release/*.dmg
+            apps/lerobot-viewer/release/*.exe
+            apps/lerobot-viewer/release/*.AppImage
           if-no-files-found: error
 
   publish:
@@ -48,8 +54,13 @@ jobs:
           path: release-assets
           pattern: desktop-*
           merge-multiple: true
+      # --repo is required: this job never checks the repository out, so gh has no
+      # git remote to infer the target from.
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" release-assets/* --generate-notes --title "LeRobot Viewer ${GITHUB_REF_NAME}"
+          gh release create "${GITHUB_REF_NAME}" release-assets/* \
+            --repo "${GITHUB_REPOSITORY}" \
+            --generate-notes \
+            --title "LeRobot Viewer ${GITHUB_REF_NAME}"
